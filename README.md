@@ -1,8 +1,8 @@
 # Automatización de un proceso de reposición y retiro de productos utilizando un robot industrial
 El objetivo de este trabajo es diseñar e implementar un sistema robótico para la automatización de la reposición, manejo de stock y retiro de productos.
 ### Docentes:
--Phd. Ing. Fernando Brunetti 
--Aux. Magno Quintana Rojas
+- **Phd. Ing. Fernando Brunetti 
+- **Aux. Magno Quintana Rojas
 ### Grupo 1: 
 
 - **Marcos Ibañez** - [MarcScript](https://github.com/MarcScript) 
