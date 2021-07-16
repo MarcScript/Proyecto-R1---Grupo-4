@@ -3,7 +3,7 @@ El objetivo de este trabajo es diseñar e implementar un sistema robótico para 
 ### Docentes:
 - Phd. Ing. Fernando Brunetti 
 - Aux. Magno Quintana Rojas
-### Grupo 1: 
+### Grupo 4: 
 
 - **Marcos Ibañez** - [MarcScript](https://github.com/MarcScript) 
 - **Matias Berni** - [Bernimo](https://github.com/Bernimo) 
