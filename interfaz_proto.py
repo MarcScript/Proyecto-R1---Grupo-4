@@ -9,16 +9,32 @@ import threading
 from PIL import Image, ImageTk, ImageDraw
 import os
 import pandas as pd
+import serial
+import time
+
 class App:
     def __init__(self,font_video=0):
         self.active_camera = False
+        #Parametros de configuracion de puerto serial
+        self.port_opened=False
+        self.com_port = ''
+        self.arduino = serial
+        self.message = ""
+        self.saved_positions = []
+        #Inicializacion de vectores
         self.info = []
         self.codelist = []
         self.codigo = []
-        self.appName = 'Proyeto Robótica 1 - Grupo 4'
+        self.appName = 'Farmacia automatizada - Grupo 4'
         self.ventana = Tk()
         self.ventana.title(self.appName)
+        #Definimos las posiciones guardadas
+        self.pos1 = [[127, 53, 101, 103, 45], [127, 53, 101, 103, 0], [116, 53, 101, 103, 0], [109, 45, 101, 103, 0], [82, 45, 101, 103, 0], [82, 69, 101, 103, 0], [82, 69, 101, 106, 0], [61, 69, 101, 98, 19], [61, 82, 101, 98, 19], [61, 82, 101, 71, 19], [61, 82, 101, 71, 85], [109, 82, 101, 71, 85]]
+        
         #Creamos el rack y los movimientos de los servos
+
+
+        
         self.rack = np.ones((4,4))
         self.servo1 = 0 
         self.servo2 = 0
@@ -58,7 +74,25 @@ class App:
         self.canvas.create_image(0, 0, image=self.archi1, anchor="nw")
         self.btnAtras.pack(side=LEFT)
         self.ventana.mainloop()
-    
+
+    ## Definimos la comunicacion por puerto serial
+    def play_positions(self):
+     for position in self.saved_positions:
+            print("playing: "+str(position))
+            self.send_positions(position);
+            time.sleep(1)
+    def send_positions(self,position):
+        self.message = "{0:0=3d}".format(position[0])+"{0:0=3d}".format(position[1])+"{0:0=3d}".format(position[2])+"{0:0=3d}".format(position[3])+"{0:0=3d}".format(position[4])+"\n"
+        self.arduino.write(str.encode(self.message))
+        print(str.encode(self.message))
+        print(self.message, end='')
+        time.sleep(0.2)
+    def set_port(self):
+        global port_opened,arduino
+        self.com_port = 'COM3' 
+        self.arduino=serial.Serial(self.com_port,9600)
+        self.port_opened=True
+        print ("COM port set to: {}".format(self.com_port))
     def limpiar(self):
         self.canvas2.delete('all')
         self.canvas.delete('all')
@@ -79,28 +113,48 @@ class App:
         self.canvas.create_text(70+3*k,30,fill="blue",font="Arial 15 bold",text="Med 4")
         
         self.bandera=0
+        self.aux = 0 #Variable para inicializar solo una vez el puerto serial
         if len(self.codigo)>0:
             self.entrada = self.codigo[-1]
-        if self.entrada == 'Medicamento 1' or self.entrada =='maibanez@fiuna.edu.py':
-            column = 0
-        elif self.entrada == 'Medicamento 2':
-            column = 1
-        elif self.entrada == 'Medicamento 3':
-            column = 2
-        elif self.entrada == 'Medicamento 4':
-            column = 3
-        else:
-            column = 5
-        try:
-            for i in range(len(self.rack)):
-                if self.rack[i,column] == 1 and self.bandera == 0:
-                    print('Medicamento encontrado en posicion {},{}'.format(i,column))
-                    self.bandera = 1
-                    self.rack[i,column]=0
-            if self.rack[0][column]==0 and self.rack[1][column]==0 and self.rack[2][column]==0 and self.rack[3][column]==0:
-                print('Medicamento no disponible - Solicite reabastecimiento')
-        except:
-            print('Medicamento no encontrado en el rack')    
+            self.saved_positions = []
+            if self.aux==0:
+                self.set_port()
+                self.aux=1
+            if self.entrada == 'Domper : 1':
+                column = 0    
+                if(self.port_opened):
+                    self.saved_positions = self.pos1
+                    self.play_positions()
+            elif self.entrada == 'Alergina : 1':
+                column = 1
+                if(self.port_opened):
+                    self.saved_positions = self.pos1
+                    self.play_positions()
+            elif self.entrada == 'Kitadol 200mg : 1':
+                column = 2
+                if(self.port_opened):
+                    self.saved_positions = self.pos1
+                    self.play_positions()
+            elif self.entrada == 'Medicamento 4':
+                column = 3
+                if(self.port_opened):
+                    self.saved_positions = self.pos1
+                    self.play_positions()
+            
+            else:
+                column = 5
+            self.arduino.close()
+            try:
+                for i in range(len(self.rack)):
+                    if self.rack[i,column] == 1 and self.bandera == 0:
+                        print('Medicamento encontrado en posicion {},{}'.format(i,column))
+                        print('Enviando {} al usuario...'.format(self.codigo[-1]))
+                        self.bandera = 1
+                        self.rack[i,column]=0
+                if self.rack[0][column]==0 and self.rack[1][column]==0 and self.rack[2][column]==0 and self.rack[3][column]==0:
+                    print('Medicamento no disponible - Solicite reabastecimiento')
+            except:
+                print('Medicamento no encontrado en el rack')    
     
         self.dibujarRack()
         self.canvas2.configure(width=self.width,height=100,bg='white')
@@ -130,6 +184,9 @@ class App:
             self.canvas2.create_text(400,75,fill="black",font="Arial 12 bold",text="Med 4 - Cant:  {}".format(self.cantMed4))  
         else:
             self.canvas2.create_text(400,75,fill="red",font="Arial 12 bold",text="Med 4 - Cant:  {}".format(self.cantMed4))     
+        self.entrada = []
+        self.codigo = []
+        self.display.delete('1.0', END)
           
           
         
@@ -232,6 +289,8 @@ class App:
             data = code.data.decode('ascii')
             x, y, w, h = code.rect.left, code.rect.top, \
                         code.rect.width, code.rect.height
+            print('El largo es: {}'.format(w))
+            print('El ancho es: {}'.format(h))
             cv2.rectangle(frm, (x,y),(x+w, y+h),(255, 0, 0), 6)
             cv2.putText(frm, code.type, (x - 10, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 50, 255), 2)
  
